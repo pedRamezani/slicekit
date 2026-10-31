@@ -1,0 +1,97 @@
+[project]
+site_name = "slicekit"
+repo_url = "https://github.com/pedRamezani/slicekit"
+site_url = "https://pedRamezani.github.io/slicekit"
+site_description = "Slice CT scans into 3D-printable plates (interlocking kit or slice stack) with halftone infill that shows the anatomy."
+site_author = "Pedram Ramezani"
+edit_uri = "edit/main/docs/"
+repo_name = "pedRamezani/slicekit"
+copyright = 'Maintained by <a href="https://github.com/pedRamezani">pedRamezani</a>.'
+
+nav = [
+    { "Home" = "index.md" },
+    { "Parameters" = "parameters.md" },
+    { "API reference" = "modules.md" },
+]
+
+# Runs ```python exec="on"``` blocks at build time (docs/parameters.md).
+[project.plugins.markdown-exec]
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "google"  # the default; set explicitly so it cannot change silently
+docstring_section_style = "table"
+show_signature_annotations = true
+separate_signature = true
+merge_init_into_class = true
+
+[project.theme]
+language = "en"
+features = [
+    "announce.dismiss",
+    "content.code.annotate",
+    "content.action.edit",
+    "content.action.view",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.prune",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+]
+
+
+[project.theme.icon]
+previous = "fontawesome/solid/angle-left"
+next = "fontawesome/solid/angle-right"
+repo = "fontawesome/brands/github"
+
+#[project.theme.font]
+#text = "Inter"
+#code = "Jetbrains Mono"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "white"
+accent = "deep orange"
+toggle.icon =  "material/brightness-7"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "black"
+accent = "deep orange"
+toggle.icon =  "material/brightness-4"
+toggle.name = "Switch to system preference"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/pedRamezani/slicekit"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/python"
+link = "https://pypi.org/project/slicekit"
+
+[project.markdown_extensions.pymdownx.snippets]
+# docs/index.md includes the README
+check_paths = true
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.pymdownx.arithmatex]
+generic = true
+
+[project.markdown_extensions.toc]
+permalink = true
