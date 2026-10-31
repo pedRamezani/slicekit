@@ -32,6 +32,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: [set-version]
+    env:
+      UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -47,10 +49,11 @@ jobs:
       - name: Build package
         run: uv build
 
+      # Skipped (not failed) until the PYPI_TOKEN secret is set, so a release still
+      # builds the package and deploys the docs.
       - name: Publish package
+        if: ${{ env.UV_PUBLISH_TOKEN != '' }}
         run: uv publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
   deploy-docs:
     needs: publish
