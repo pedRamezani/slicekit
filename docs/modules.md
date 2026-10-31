@@ -8,6 +8,8 @@
 
 ::: slicekit.axes
 
+::: slicekit.arrays
+
 ## Imaging
 
 ::: slicekit.imaging.dicom

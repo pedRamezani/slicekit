@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..arrays import Array
 from ..axes import Axis
 from ..geometry.sections import mask_outline, take_section
 from ..geometry.shapes import polygons
@@ -22,7 +23,7 @@ from .slots import cut_slots
 log = logging.getLogger(__name__)
 
 
-def prepare_volume(volume: Volume, params: KitParams) -> tuple[Volume, np.ndarray]:
+def prepare_volume(volume: Volume, params: KitParams) -> tuple[Volume, Array]:
     """Scale to printed size, resample, segment the body and crop around it.
 
     Args:
@@ -37,9 +38,7 @@ def prepare_volume(volume: Volume, params: KitParams) -> tuple[Volume, np.ndarra
     return crop_and_center(volume, mask, margin=params.thickness)
 
 
-def _make_plates(
-    volume: Volume, mask: np.ndarray, normal: Axis, positions: np.ndarray, params: KitParams
-) -> list[Plate]:
+def _make_plates(volume: Volume, mask: Array, normal: Axis, positions: Array, params: KitParams) -> list[Plate]:
     plates = []
     digits = max(2, len(str(len(positions) - 1)))
     for i, pos in enumerate(positions):
@@ -52,7 +51,7 @@ def _make_plates(
     return plates
 
 
-def build_kit(volume: Volume, mask: np.ndarray, params: KitParams, progress: Progress | None = None) -> Kit:
+def build_kit(volume: Volume, mask: Array, params: KitParams, progress: Progress | None = None) -> Kit:
     """Build all plates from a prepared volume: place, outline, slot and fill them.
 
     Args:

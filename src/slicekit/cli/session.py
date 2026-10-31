@@ -8,9 +8,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 from rich.progress import track
 
+from ..arrays import Array
 from ..imaging.dicom import Volume, load_series, series_info
 from ..pipeline import Kit, KitParams, build_kit, prepare_volume
 from .prompts import console
@@ -38,7 +38,7 @@ class Session:
     summary: str = ""
     params: KitParams = field(default_factory=lambda: KitParams(scale=0.4))
     out: Path = Path("kit_out")
-    _prepared: tuple[tuple[Any, ...], Volume, np.ndarray] | None = None  # (key, volume, mask)
+    _prepared: tuple[tuple[Any, ...], Volume, Array] | None = None  # (key, volume, mask)
     _built: tuple[KitParams, Kit] | None = None
 
     def select(self, path: Path, series_uid: str | None = None) -> None:
@@ -58,7 +58,7 @@ class Session:
         self.dicom, self.series_uid = path, series_uid
         self._prepared = self._built = None
 
-    def prepared(self) -> tuple[Volume, np.ndarray]:
+    def prepared(self) -> tuple[Volume, Array]:
         """Prepared volume and body mask, loaded again only if the series or scale settings changed.
 
         Raises:

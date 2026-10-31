@@ -30,6 +30,7 @@ from scipy import ndimage
 from scipy.spatial import cKDTree
 from shapely.geometry.base import BaseGeometry
 
+from ..arrays import Array
 from ..geometry.sections import Section
 from .tone import ToneMap, tone_curve, tone_field
 
@@ -43,7 +44,7 @@ Bounds = tuple[float, float, float, float]  # (u_lo, v_lo, u_hi, v_hi)
 HEX_AREA = np.sqrt(3) / 2  # area of a hex cell with unit centre-to-centre pitch
 
 
-def sample(field: np.ndarray, section: Section, points: np.ndarray) -> np.ndarray:
+def sample(field: Array, section: Section, points: Array) -> Array:
     """Bilinear sample of a per-pixel field at arbitrary plate coordinates.
 
     Args:
@@ -62,7 +63,7 @@ def sample(field: np.ndarray, section: Section, points: np.ndarray) -> np.ndarra
 HOLE_MARGIN = 1.05
 
 
-def hex_fraction_range(pitch: npt.ArrayLike, p: KitParams) -> tuple[np.ndarray, np.ndarray]:
+def hex_fraction_range(pitch: npt.ArrayLike, p: KitParams) -> tuple[Array, Array]:
     """Printable range of solid fractions for a hex lattice.
 
     Args:
@@ -79,7 +80,7 @@ def hex_fraction_range(pitch: npt.ArrayLike, p: KitParams) -> tuple[np.ndarray, 
     return f_min, np.maximum(f_max, f_min)
 
 
-def solid_fraction(t: npt.ArrayLike, f_min: npt.ArrayLike, f_max: npt.ArrayLike, p: KitParams) -> np.ndarray:
+def solid_fraction(t: npt.ArrayLike, f_min: npt.ArrayLike, f_max: npt.ArrayLike, p: KitParams) -> Array:
     """Solid fraction for a tone, kept within the printable range.
 
     Every tone below ``p.solid_tone`` keeps visible holes; denser tissue goes solid.
@@ -99,7 +100,7 @@ def solid_fraction(t: npt.ArrayLike, f_min: npt.ArrayLike, f_max: npt.ArrayLike,
     return np.where(coverage >= p.solid_tone, 1.0, f)
 
 
-def hole_inset(pitch: npt.ArrayLike, fraction: npt.ArrayLike) -> np.ndarray:
+def hole_inset(pitch: npt.ArrayLike, fraction: npt.ArrayLike) -> Array:
     """How far to shrink a hex cell so the lattice reaches a solid fraction.
 
     Args:
@@ -116,7 +117,7 @@ def hole_inset(pitch: npt.ArrayLike, fraction: npt.ArrayLike) -> np.ndarray:
 # --- cell layouts -----------------------------------------------------------------------
 
 
-def hex_grid(bounds: Bounds, pitch: float) -> tuple[np.ndarray, np.ndarray]:
+def hex_grid(bounds: Bounds, pitch: float) -> tuple[Array, Array]:
     """Pointy-top hex grid covering a rectangle.
 
     Odd rows are offset by half a pitch to the right.
@@ -138,7 +139,7 @@ def hex_grid(bounds: Bounds, pitch: float) -> tuple[np.ndarray, np.ndarray]:
     return np.column_stack([u.ravel(), v.ravel()]), np.column_stack([r.ravel(), c.ravel()])
 
 
-def hexagons(centres: np.ndarray, pitch: float) -> np.ndarray:
+def hexagons(centres: Array, pitch: float) -> Array:
     """Pointy-top hexagons that tile the plane when placed on ``hex_grid`` centres.
 
     Args:
@@ -153,7 +154,7 @@ def hexagons(centres: np.ndarray, pitch: float) -> np.ndarray:
     return np.asarray(shapely.polygons(centres[:, None, :] + ring[None, :, :]))
 
 
-def error_diffusion(tone: np.ndarray, index: np.ndarray, threshold: float = 0.5) -> np.ndarray:
+def error_diffusion(tone: Array, index: Array, threshold: float = 0.5) -> Array:
     """Binary dither of per-cell tone on a hex grid (serpentine Floyd-Steinberg).
 
     The quantisation error goes 1/2 to the next cell in the row and 1/4 to each of the
@@ -188,9 +189,7 @@ def error_diffusion(tone: np.ndarray, index: np.ndarray, threshold: float = 0.5)
     return np.asarray(out[index[:, 0], index[:, 1]], dtype=bool)
 
 
-def relaxed_seeds(
-    points: np.ndarray, size: np.ndarray, pixel_area: float, iterations: int, rng: np.random.Generator
-) -> np.ndarray:
+def relaxed_seeds(points: Array, size: Array, pixel_area: float, iterations: int, rng: np.random.Generator) -> Array:
     """Seeds for a graded Voronoi tessellation (density-weighted Lloyd relaxation).
 
     Where ``size`` is constant the cells relax into a regular hex grid.
@@ -223,7 +222,7 @@ def relaxed_seeds(
     return np.asarray(seeds, dtype=float)
 
 
-def _hex_cells(interior: BaseGeometry, field: np.ndarray, section: Section, p: KitParams, dither: bool) -> np.ndarray:
+def _hex_cells(interior: BaseGeometry, field: Array, section: Section, p: KitParams, dither: bool) -> Array:
     centres, index = hex_grid(interior.bounds, p.pitch)
     keep = shapely.intersects_xy(interior.buffer(p.pitch / 2), centres[:, 0], centres[:, 1])
     centres, index = centres[keep], index[keep]
@@ -237,13 +236,13 @@ def _hex_cells(interior: BaseGeometry, field: np.ndarray, section: Section, p: K
     return _shrunk(hexagons(centres, p.pitch), inset)
 
 
-def _shrunk(cells: np.ndarray, inset: np.ndarray) -> np.ndarray:
+def _shrunk(cells: Array, inset: Array) -> Array:
     """Cells shrunk by ``inset`` (inf = cell stays solid)."""
     open_cells = np.isfinite(inset)
     return np.asarray(shapely.buffer(cells[open_cells], -inset[open_cells], join_style="mitre"))
 
 
-def _line_holes(interior: BaseGeometry, field: np.ndarray, section: Section, p: KitParams) -> np.ndarray:
+def _line_holes(interior: BaseGeometry, field: Array, section: Section, p: KitParams) -> Array:
     """Gaps between parallel (optionally wavy) lines whose width follows the tone."""
     angle = np.radians(p.line_angle)
     along = np.array([np.cos(angle), np.sin(angle)])
@@ -274,8 +273,8 @@ def _line_holes(interior: BaseGeometry, field: np.ndarray, section: Section, p: 
 
 
 def _voronoi_cells(
-    interior: BaseGeometry, field: np.ndarray, section: Section, p: KitParams, rng: np.random.Generator
-) -> np.ndarray | None:
+    interior: BaseGeometry, field: Array, section: Section, p: KitParams, rng: np.random.Generator
+) -> Array | None:
     # Relax on a grid fine enough to resolve the smallest cells, not just the CT voxels.
     step = min(section.step, p.min_cell / 6)
     u_lo, v_lo, u_hi, v_hi = interior.bounds

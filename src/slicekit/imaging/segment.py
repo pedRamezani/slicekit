@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from scipy import ndimage
 
+from ..arrays import Array
 from .dicom import Volume
 
 
@@ -28,7 +31,7 @@ def resample(volume: Volume, voxel_size: float, scale: float = 1.0) -> Volume:
     return Volume(hu, (voxel_size, voxel_size, voxel_size), (z, y, x))
 
 
-def body_mask(volume: Volume, threshold: float = -400.0, opening: float = 1.0) -> np.ndarray:
+def body_mask(volume: Volume, threshold: float = -400.0, opening: float = 1.0) -> Array:
     """Mask of the body: threshold, keep the largest component, fill internal air.
 
     Args:
@@ -49,7 +52,8 @@ def body_mask(volume: Volume, threshold: float = -400.0, opening: float = 1.0) -
     if iterations > 0:
         mask = ndimage.binary_opening(mask, iterations=iterations)
 
-    labels, count = ndimage.label(mask)
+    # Without ``output`` this is always (labels, count); scipy-stubs < 1.16 type it as a union with int.
+    labels, count = cast("tuple[Array, int]", ndimage.label(mask))
     if count == 0:
         raise ValueError(f"No voxels above {threshold} HU")
     sizes = np.bincount(labels.ravel())
@@ -62,7 +66,7 @@ def body_mask(volume: Volume, threshold: float = -400.0, opening: float = 1.0) -
     return np.asarray(mask, dtype=bool)
 
 
-def crop_and_center(volume: Volume, mask: np.ndarray, margin: float = 2.0) -> tuple[Volume, np.ndarray]:
+def crop_and_center(volume: Volume, mask: Array, margin: float = 2.0) -> tuple[Volume, Array]:
     """Crop the volume and mask to the mask's bounding box and centre it on the origin.
 
     Args:

@@ -16,12 +16,13 @@ from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from skimage import measure
 
+from ..arrays import Array
 from ..axes import AXIS_INDEX, PLATE_AXES, Axis
 from ..imaging.dicom import Volume
 from .shapes import keep_polygons
 
 # scikit-image publishes no types; this is the one function we use from it.
-_find_contours: Callable[[np.ndarray, float], list[np.ndarray]] = measure.find_contours
+_find_contours: Callable[[Array, float], list[Array]] = measure.find_contours
 
 
 @dataclass
@@ -36,14 +37,14 @@ class Section:
         step: Pixel pitch in mm (the isotropic voxel size).
     """
 
-    hu: np.ndarray
-    mask: np.ndarray
+    hu: Array
+    mask: Array
     u0: float
     v0: float
     step: float
 
 
-def take_section(volume: Volume, mask: np.ndarray, normal: Axis, position: float, thickness: float) -> Section | None:
+def take_section(volume: Volume, mask: Array, normal: Axis, position: float, thickness: float) -> Section | None:
     """Sample the volume on one plate.
 
     Args:

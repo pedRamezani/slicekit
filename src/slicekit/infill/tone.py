@@ -12,6 +12,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy import ndimage
 
+from ..arrays import Array
 from ..geometry.sections import Section
 from ..imaging.dicom import Volume
 
@@ -32,8 +33,8 @@ class ToneMap:
         invert: Swap open and solid (dense tissue open).
     """
 
-    hu: np.ndarray
-    tone: np.ndarray
+    hu: Array
+    tone: Array
     gamma: float = 1.0
     invert: bool = False
 
@@ -54,7 +55,7 @@ class ToneMap:
 
     @classmethod
     def equalized(
-        cls, body_hu: np.ndarray, percentiles: tuple[float, float], gamma: float = 1.0, invert: bool = False
+        cls, body_hu: Array, percentiles: tuple[float, float], gamma: float = 1.0, invert: bool = False
     ) -> ToneMap:
         """Histogram equalisation: equal tone steps hold equal amounts of body tissue.
 
@@ -71,13 +72,13 @@ class ToneMap:
         knots = knots + np.arange(len(knots)) * 1e-6  # strictly increasing for interp
         return cls(knots, np.linspace(0.0, 1.0, len(knots)), gamma, invert)
 
-    def __call__(self, hu: np.ndarray) -> np.ndarray:
+    def __call__(self, hu: Array) -> Array:
         """Tone in [0, 1] for each HU value."""
         t = np.asarray(np.interp(hu, self.hu, self.tone) ** self.gamma)
         return 1.0 - t if self.invert else t
 
 
-def tone_field(section: Section, tone: ToneMap, blur: float) -> np.ndarray:
+def tone_field(section: Section, tone: ToneMap, blur: float) -> Array:
     """Tone per section pixel.
 
     Args:
@@ -94,7 +95,7 @@ def tone_field(section: Section, tone: ToneMap, blur: float) -> np.ndarray:
     return tone(hu)
 
 
-def tone_curve(t: npt.ArrayLike, perceptual: bool = False) -> np.ndarray:
+def tone_curve(t: npt.ArrayLike, perceptual: bool = False) -> Array:
     """Coverage (0 open .. 1 solid) wanted for a tone.
 
     Args:
@@ -114,7 +115,7 @@ def tone_curve(t: npt.ArrayLike, perceptual: bool = False) -> np.ndarray:
     return np.asarray(1.0 - luminance)
 
 
-def make_tone_map(volume: Volume, mask: np.ndarray, params: KitParams) -> ToneMap:
+def make_tone_map(volume: Volume, mask: Array, params: KitParams) -> ToneMap:
     """HU -> tone curve shared by all plates, from the HU distribution inside the body.
 
     Args:

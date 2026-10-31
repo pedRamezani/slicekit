@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..arrays import Array
 from ..axes import AXIS_INDEX, Axis
 from ..imaging.dicom import Volume
 from .params import KitParams
 
 
-def plate_positions(volume: Volume, mask: np.ndarray, normal: Axis, params: KitParams) -> np.ndarray:
+def plate_positions(volume: Volume, mask: Array, normal: Axis, params: KitParams) -> Array:
     """Interlocking plate centres along one axis, evenly pitched and centred on the body.
 
     Args:
@@ -28,7 +29,7 @@ def plate_positions(volume: Volume, mask: np.ndarray, normal: Axis, params: KitP
     return np.asarray((lo + hi) / 2 + (np.arange(count) - (count - 1) / 2) * params.plate_pitch)
 
 
-def stack_positions(volume: Volume, mask: np.ndarray, normal: Axis, thickness: float) -> np.ndarray:
+def stack_positions(volume: Volume, mask: Array, normal: Axis, thickness: float) -> Array:
     """Slice centres for a gapless stack along one axis, covering the whole body.
 
     Args:

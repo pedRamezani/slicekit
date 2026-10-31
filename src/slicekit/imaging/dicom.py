@@ -14,6 +14,8 @@ import numpy as np
 import pydicom
 from pydicom.errors import InvalidDicomError
 
+from ..arrays import Array
+
 log = logging.getLogger(__name__)
 
 
@@ -29,16 +31,17 @@ class Volume:
         origin: Position in mm of the centre of voxel ``[0, 0, 0]``, in (z, y, x) order.
     """
 
-    hu: np.ndarray
+    hu: Array
     spacing: tuple[float, float, float]
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
     @property
     def shape(self) -> tuple[int, int, int]:
         """Number of voxels along (z, y, x)."""
-        return self.hu.shape
+        z, y, x = self.hu.shape
+        return z, y, x
 
-    def coords(self, axis: int) -> np.ndarray:
+    def coords(self, axis: int) -> Array:
         """World coordinates of the voxel centres along one array axis.
 
         Args:
@@ -300,7 +303,7 @@ def _load_multiframe(f: Path) -> Volume:
     return Volume(hu, (dz, dy, dx), origin)
 
 
-def _orientation(iop: Sequence[float]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _orientation(iop: Sequence[float]) -> tuple[Array, Array, Array]:
     row_cos, col_cos = np.asarray(iop[:3], float), np.asarray(iop[3:], float)
     normal = np.cross(row_cos, col_cos)
     if max(abs(row_cos @ (1, 0, 0)), abs(col_cos @ (0, 1, 0))) < 0.99:
@@ -308,16 +311,16 @@ def _orientation(iop: Sequence[float]) -> tuple[np.ndarray, np.ndarray, np.ndarr
     return row_cos, col_cos, normal
 
 
-def _project(position: Sequence[float], axis: np.ndarray) -> float:
+def _project(position: Sequence[float], axis: Array) -> float:
     return float(np.asarray(position, float) @ axis)
 
 
-def _to_hu(pixels: np.ndarray, slope: float, intercept: float) -> np.ndarray:
+def _to_hu(pixels: Array, slope: float, intercept: float) -> Array:
     hu = pixels.astype(np.float32) * float(slope) + float(intercept)
-    return np.clip(np.rint(hu), -32768, 32767).astype(np.int16)
+    return np.asarray(np.clip(np.rint(hu), -32768, 32767), dtype=np.int16)
 
 
-def _slice_spacing(positions: np.ndarray, slice_thickness: float | None) -> float:
+def _slice_spacing(positions: Array, slice_thickness: float | None) -> float:
     if len(positions) < 2:
         return float(slice_thickness or 1.0)
     gaps = np.diff(positions)

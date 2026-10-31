@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
 from shapely.geometry.base import BaseGeometry
 
+from ..arrays import Array
 from ..axes import Axis
 from ..export.formats import EXPORT_FORMATS, ExportFormat
 from ..geometry.sections import Section
@@ -73,7 +73,7 @@ class Kit:
 
     params: KitParams
     volume: Volume
-    mask: np.ndarray
+    mask: Array
     plates: list[Plate]
 
     def flat_solids(self) -> dict[str, Compound]:
